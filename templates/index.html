@@ -1,0 +1,264 @@
+
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Shoply | Onlayn do‘kon</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+    <header class="navbar">
+        <div class="nav-container">
+
+            <a href="/" class="logo">
+                shoply<span>.</span>
+            </a>
+
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Mahsulotlarni qidirish...">
+                <button type="button" id="searchButton">⌕</button>
+            </div>
+
+            <div class="nav-right">
+                <div class="nav-delivery">
+                    <span>Yetkazib berish</span>
+                    <strong>O‘zbekiston</strong>
+                </div>
+
+                <a href="#cart" class="cart-nav">
+                    🛒
+                    <span>{{ total_quantity }}</span>
+                    <strong>Savat</strong>
+                </a>
+            </div>
+
+        </div>
+    </header>
+
+
+    <nav class="category-bar">
+        <div class="category-container">
+            <a href="#" class="category-link active" data-category="All">Barchasi</a>
+            <a href="#" class="category-link" data-category="Elektronika">Elektronika</a>
+            <a href="#" class="category-link" data-category="Moda">Moda</a>
+            <a href="#" class="category-link" data-category="Uy uchun">Uy uchun</a>
+        </div>
+    </nav>
+
+
+    <main class="main-container">
+
+        <section class="products-section">
+
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">BIZNING TO‘PLAM</p>
+                    <h1>Mahsulotlarni kashf eting</h1>
+                    <p class="section-subtitle">
+                        O‘zingizga yoqqan mahsulotni tanlang.
+                    </p>
+                </div>
+
+                <div class="product-count">
+                    {{ products|length }} ta mahsulot
+                </div>
+            </div>
+
+
+            <div class="products-grid" id="productsGrid">
+
+                {% for product in products %}
+
+                <article
+                    class="product-card"
+                    data-name="{{ product.name|lower }}"
+                    data-category="{{ product.category }}"
+                >
+
+                    <div class="product-image">
+                        <img src="{{ product.image }}" alt="{{ product.name }}">
+                        <span class="product-category">
+                            {{ product.category }}
+                        </span>
+                    </div>
+
+                    <div class="product-info">
+
+                        <div class="rating">
+                            <span>★</span>
+                            {{ product.rating }}
+                            <small>({{ product.reviews }} ta sharh)</small>
+                        </div>
+
+                        <h3>{{ product.name }}</h3>
+
+                        <p class="product-description">
+                            {{ product.description }}
+                        </p>
+
+                        <div class="product-bottom">
+
+                            <div class="product-price">
+                                {{ "{:,.0f}".format(product.price).replace(",", " ") }}
+                                <small>so‘m</small>
+                            </div>
+
+                            <form action="{{ url_for('add_to_cart', product_id=product.id) }}" method="POST">
+                                <button type="submit" class="add-button">
+                                    + Savatga
+                                </button>
+                            </form>
+
+                        </div>
+
+                    </div>
+
+                </article>
+
+                {% endfor %}
+
+            </div>
+
+            <div id="emptySearch" class="empty-search" hidden>
+                Mahsulot topilmadi.
+            </div>
+
+        </section>
+
+
+        <aside class="cart-sidebar" id="cart">
+
+            <div class="cart-heading">
+                <div>
+                    <p class="eyebrow">SIZNING BUYURTMANGIZ</p>
+                    <h2>Xarid savati</h2>
+                </div>
+
+                <span class="cart-count">{{ total_quantity }}</span>
+            </div>
+
+
+            {% if cart_items %}
+
+                <div class="cart-items">
+
+                    {% for item in cart_items %}
+
+                    <div class="cart-item">
+
+                        <img src="{{ item.image }}" alt="{{ item.name }}">
+
+                        <div class="cart-item-info">
+
+                            <h4>{{ item.name }}</h4>
+
+                            <p class="cart-item-price">
+                                {{ "{:,.0f}".format(item.price).replace(",", " ") }} so‘m
+                            </p>
+
+                            <div class="quantity-control">
+
+                                <form action="{{ url_for('update_cart', product_id=item.id) }}" method="POST">
+                                    <input type="hidden" name="quantity" value="{{ item.quantity - 1 }}">
+                                    <button type="submit" {% if item.quantity <= 1 %}disabled{% endif %}>−</button>
+                                </form>
+
+                                <span>{{ item.quantity }}</span>
+
+                                <form action="{{ url_for('update_cart', product_id=item.id) }}" method="POST">
+                                    <input type="hidden" name="quantity" value="{{ item.quantity + 1 }}">
+                                    <button type="submit">+</button>
+                                </form>
+
+                            </div>
+
+                        </div>
+
+                        <div class="cart-item-right">
+
+                            <strong>
+                                {{ "{:,.0f}".format(item.subtotal).replace(",", " ") }} so‘m
+                            </strong>
+
+                            <form action="{{ url_for('remove_from_cart', product_id=item.id) }}" method="POST">
+                                <button type="submit" class="remove-button">
+                                    O‘chirish
+                                </button>
+                            </form>
+
+                        </div>
+
+                    </div>
+
+                    {% endfor %}
+
+                </div>
+
+
+                <form action="{{ url_for('clear_cart') }}" method="POST">
+                    <button type="submit" class="clear-cart">
+                        Savatni tozalash
+                    </button>
+                </form>
+
+
+                <div class="cart-summary">
+
+                    <div class="summary-row">
+                        <span>Mahsulotlar ({{ total_quantity }})</span>
+                        <strong>{{ "{:,.0f}".format(total).replace(",", " ") }} so‘m</strong>
+                    </div>
+
+                    <div class="summary-row">
+                        <span>Yetkazib berish</span>
+                        <strong class="free-delivery">BEPUL</strong>
+                    </div>
+
+                    <div class="summary-divider"></div>
+
+                    <div class="total-row">
+                        <span>Jami</span>
+                        <strong>{{ "{:,.0f}".format(total).replace(",", " ") }} so‘m</strong>
+                    </div>
+
+                    <button type="button" class="checkout-button" id="checkoutButton">
+                        Buyurtma berish →
+                    </button>
+
+                    <p class="secure-text">🔒 Xavfsiz buyurtma</p>
+
+                </div>
+
+            {% else %}
+
+                <div class="empty-cart">
+                    <div class="empty-cart-icon">🛍️</div>
+                    <h3>Savatingiz bo‘sh</h3>
+                    <p>Xaridni boshlash uchun mahsulot qo‘shing.</p>
+                </div>
+
+            {% endif %}
+
+        </aside>
+
+    </main>
+
+
+    <footer class="footer">
+        <a href="/" class="logo">shoply<span>.</span></a>
+        <p>© 2026 Shoply. Siz uchun qulay xarid tajribasi.</p>
+    </footer>
+
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+
+</body>
+</html>
